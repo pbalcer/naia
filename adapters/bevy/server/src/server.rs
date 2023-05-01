@@ -89,6 +89,10 @@ impl<'w> Server<'w> {
         self.server.users_count()
     }
 
+    pub fn rtt(&self, user_key: &UserKey) -> Option<f32> {
+        self.server.rtt(user_key)
+    }
+
     pub fn user_scope(&mut self, user_key: &UserKey) -> UserScopeMut<Entity> {
         self.server.user_scope(user_key)
     }
