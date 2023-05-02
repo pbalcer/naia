@@ -27,6 +27,7 @@ impl IndexedMessageWriter {
             if outgoing_messages.is_empty() {
                 break;
             }
+            println!("outgoing messages {:?}", outgoing_messages.len());
 
             // check that we can write the next message
             let (message_index, message) = outgoing_messages.front().unwrap();
