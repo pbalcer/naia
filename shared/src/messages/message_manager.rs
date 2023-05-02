@@ -230,6 +230,7 @@ impl MessageManager {
             let mut counter = writer.counter();
             counter.write_bits(<ChannelKind as ConstBitLength>::const_bit_length());
             counter.write_bit(false);
+            counter.write_bit(false);
 
             if counter.overflowed() {
                 break;

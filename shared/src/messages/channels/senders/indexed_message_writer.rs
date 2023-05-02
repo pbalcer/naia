@@ -40,6 +40,7 @@ impl IndexedMessageWriter {
                 message_index,
                 message,
             );
+            counter.write_bit(true);
 
             if counter.overflowed() {
                 // if nothing useful has been written in this packet yet,

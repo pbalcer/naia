@@ -89,6 +89,7 @@ impl ChannelTickBufferSender {
                 message_tick,
                 messages,
             );
+            counter.write_bit(false);
 
             if counter.overflowed() {
                 // if nothing useful has been written in this packet yet,

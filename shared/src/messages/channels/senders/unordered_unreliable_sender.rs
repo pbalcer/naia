@@ -77,6 +77,7 @@ impl MessageChannelSender for UnorderedUnreliableSender {
             let message = self.outgoing_messages.front().unwrap();
             let mut counter = writer.counter();
             self.write_message(message_kinds, converter, &mut counter, message);
+            counter.write_bit(true);
 
             if counter.overflowed() {
                 // if nothing useful has been written in this packet yet,
