@@ -49,6 +49,14 @@ impl<'w> Client<'w> {
         self.client.rtt()
     }
 
+    pub fn incoming_bandwidth(&mut self) -> f32 {
+        self.client.incoming_bandwidth()
+    }
+
+    pub fn outgoing_bandwidth(&mut self) -> f32 {
+        self.client.outgoing_bandwidth()
+    }
+
     pub fn jitter(&self) -> f32 {
         self.client.jitter()
     }
