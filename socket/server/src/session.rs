@@ -7,7 +7,7 @@ use std::{
 use async_dup::Arc;
 use futures_core::Stream;
 use http::{header, HeaderValue, Response};
-use log::info;
+use log::{info, warn};
 use once_cell::sync::OnceCell;
 use smol::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines},
@@ -89,54 +89,56 @@ async fn serve(mut session_endpoint: SessionEndpoint, mut stream: Arc<Async<TcpS
     {
         let mut line: Vec<u8> = Vec::new();
         while let Some(byte) = bytes.next().await {
-            let byte = byte.expect("unable to read a byte from incoming stream");
+            if let Ok(byte) = byte {
+                if headers_read {
+                    if let Some(content_length) = content_length {
+                        body.push(byte);
 
-            if headers_read {
-                if let Some(content_length) = content_length {
-                    body.push(byte);
-
-                    if body.len() >= content_length {
-                        success = true;
+                        if body.len() >= content_length {
+                            success = true;
+                            break;
+                        }
+                    } else {
+                        info!("request was missing Content-Length header");
                         break;
                     }
-                } else {
-                    info!("request was missing Content-Length header");
-                    break;
                 }
-            }
-
-            if byte == b'\r' {
-                continue;
-            } else if byte == b'\n' {
-                match String::from_utf8(line.clone()) {
-                    Ok(mut str) => {
-                        line.clear();
-                        if rtc_url_match {
-                            if str.to_lowercase().starts_with("content-length: ") {
-                                let (_, last) = str.split_at(16);
-                                str = last.to_string();
-                                content_length = str.parse::<usize>().ok();
-                            } else if str.is_empty() {
-                                headers_read = true;
+                if byte == b'\r' {
+                    continue;
+                } else if byte == b'\n' {
+                    match String::from_utf8(line.clone()) {
+                        Ok(mut str) => {
+                            line.clear();
+                            if rtc_url_match {
+                                if str.to_lowercase().starts_with("content-length: ") {
+                                    let (_, last) = str.split_at(16);
+                                    str = last.to_string();
+                                    content_length = str.parse::<usize>().ok();
+                                } else if str.is_empty() {
+                                    headers_read = true;
+                                }
+                            } else if str.starts_with(
+                                RTC_URL_PATH
+                                    .get()
+                                    .expect("unable to retrieve URL path, was it not configured?"),
+                            ) {
+                                rtc_url_match = true;
                             }
-                        } else if str.starts_with(
-                            RTC_URL_PATH
-                                .get()
-                                .expect("unable to retrieve URL path, was it not configured?"),
-                        ) {
-                            rtc_url_match = true;
                         }
-                    },
-                    Err(err) => {
-                        info!(
-                            "Invalid WebRTC session request from {}. Error: {}",
-                            remote_addr, err
-                        );
-                        break;
-                    },
+                        Err(err) => {
+                            info!(
+                                "Invalid WebRTC session request from {}. Error: {}",
+                                remote_addr, err
+                            );
+                            break;
+                        }
+                    }
+                } else {
+                    line.push(byte);
                 }
             } else {
-                line.push(byte);
+                warn!("unable to read a byte from incoming stream");
+                break;
             }
         }
 
