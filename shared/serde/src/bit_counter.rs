@@ -12,7 +12,7 @@ impl BitCounter {
         Self {
             start_bits,
             current_bits,
-            max_bits,
+            max_bits: max_bits - 16, //leave 16 bits leftover
         }
     }
 
